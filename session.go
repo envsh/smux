@@ -80,7 +80,7 @@ func newSession(config *Config, conn io.ReadWriteCloser, client bool) *Session {
 }
 
 // OpenStream is used to create a new stream
-func (s *Session) OpenStream() (*Stream, error) {
+func (s *Session) OpenStream(syndat string) (*Stream, error) {
 	if s.IsClosed() {
 		return nil, errors.New(errBrokenPipe)
 	}
@@ -103,7 +103,9 @@ func (s *Session) OpenStream() (*Stream, error) {
 
 	stream := newStream(sid, s.config.MaxFrameSize, s)
 
-	if _, err := s.writeFrame(newFrame(cmdSYN, sid)); err != nil {
+	f := newFrame(cmdSYN, sid)
+	f.data = []byte(syndat)
+	if _, err := s.writeFrame(f); err != nil {
 		return nil, errors.Wrap(err, "writeFrame")
 	}
 
@@ -248,6 +250,7 @@ func (s *Session) recvLoop() {
 				s.streamLock.Lock()
 				if _, ok := s.streams[f.sid]; !ok {
 					stream := newStream(f.sid, s.config.MaxFrameSize, s)
+					stream.syndat = string(f.data)
 					s.streams[f.sid] = stream
 					select {
 					case s.chAccepts <- stream:

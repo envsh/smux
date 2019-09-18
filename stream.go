@@ -24,6 +24,8 @@ type Stream struct {
 	dieLock       sync.Mutex
 	readDeadline  atomic.Value
 	writeDeadline atomic.Value
+
+	syndat string
 }
 
 // newStream initiates a Stream struct
@@ -41,6 +43,7 @@ func newStream(id uint32, frameSize int, sess *Session) *Stream {
 func (s *Stream) ID() uint32 {
 	return s.id
 }
+func (s *Stream) Syndat() string { return s.syndat }
 
 // Read implements net.Conn
 func (s *Stream) Read(b []byte) (n int, err error) {
